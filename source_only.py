@@ -66,7 +66,7 @@ def train(clf, optimizer, ep, train_loader, test_loader):
 			x = x.to(device)
 			y = y.to(device)
 
-			pred = clf(x)
+			pred, _ = clf(x)
 
 			loss = loss_fn(pred, y)
 
@@ -81,7 +81,7 @@ def train(clf, optimizer, ep, train_loader, test_loader):
 			x = x.to(device)
 			y = y.to(device)
 
-			pred = clf(x)
+			pred, _ = clf(x)
 
 			ac += np.sum(np.argmax(pred.cpu().detach().numpy(), axis=1) == y.cpu().detach().numpy())
 
