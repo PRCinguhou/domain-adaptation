@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from torch.autograd import Function
 from model import encoder, domain_classifier
-
+from LoadData import DATASET
 ###		basic setting 	 ###
 cuda = torch.cuda.is_available()
 device = torch.device('cuda' if cuda else 'cpu')
@@ -27,19 +27,20 @@ transform = transforms.Compose([
 	])
 
 ###		 dataloader  	 ###
-mnist_train_set = dset.MNIST(root='./mnist/', train=True, download=download, transform = transform)
-mnist_test_set = dset.MNIST(root='./mnist/', train=False, transform = transform)
+mnistm_train_set = DATASET('./mnistm/train', './mnistm/train.csv')
+mnistm_test_set = DATASET('./mnistm/test', './mnistm/test.csv')
+
 svhn_train_set = dset.SVHN(root='./svhn/', download=download, transform = transform)
 
 
-mnist_train_loader = torch.utils.data.DataLoader(
-	dataset = mnist_train_set,
+mnistm_train_loader = torch.utils.data.DataLoader(
+	dataset = mnistm_train_set,
 	batch_size = BATCH_SIZE,
 	shuffle = True,
 	)
 
-mnist_test_loader = torch.utils.data.DataLoader(
-	dataset = mnist_test_set,
+mnistm_test_loader = torch.utils.data.DataLoader(
+	dataset = mnistm_test_set,
 	batch_size = BATCH_SIZE,
 	shuffle = True,
 	)
@@ -65,6 +66,7 @@ def train(clf, optimizer, ep, train_loader, test_loader):
 			x, y = batch
 			x = x.to(device)
 			y = y.to(device)
+			y = y.view(-1)
 
 			pred, _ = clf(x)
 
@@ -87,12 +89,12 @@ def train(clf, optimizer, ep, train_loader, test_loader):
 
 		print('ac :' , ac / len(test_loader) / BATCH_SIZE)
 
-		torch.save(clf.state_dict(), './model/mnist2svhn_source_only.pth')
+		torch.save(clf.state_dict(), './model/mnistm2svhn_source_only.pth')
 
 
 def tsne_plot(cls_model, train_loader, test_loader):
 
-	cls_model.load_state_dict(torch.load('./model/mnist_clf.pth'))
+	cls_model.load_state_dict(torch.load('./model/mnistm_clf.pth'))
 	cls_model.eval()
 	features = []
 
@@ -135,7 +137,7 @@ if __name__ == '__main__':
 	clf = encoder().to(device)
 	optimizer = optim.Adam(clf.parameters(), lr=1e-4)
 
-	train(clf, optimizer, 20, mnist_train_loader, svhn_train_loader)
-	tsne_plot(clf, mnist_train_loader, svhn_train_loader)
+	train(clf, optimizer, 20, mnistm_train_loader, svhn_train_loader)
+	tsne_plot(clf, mnistm_train_loader, svhn_train_loader)
 
-	
+

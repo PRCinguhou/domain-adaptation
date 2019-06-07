@@ -9,7 +9,7 @@ class encoder(nn.Module):
 		super(encoder, self).__init__()
 
 		self.cnn = nn.Sequential(
-			nn.Conv2d(1, 16, 5, 1, 2),
+			nn.Conv2d(3, 16, 5, 1, 2),
 			nn.BatchNorm2d(16),
 			nn.ReLU(True),
 			nn.MaxPool2d(2),
