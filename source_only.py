@@ -90,6 +90,45 @@ def train(clf, optimizer, ep, train_loader, test_loader):
 		torch.save(clf.state_dict(), './model/mnist2svhn_source_only.pth')
 
 
+def tsne_plot(cls_model, train_loader, test_loader):
+
+	cls_model.load_state_dict(torch.load('./model/mnist_clf.pth'))
+	cls_model.eval()
+	features = []
+
+	for index, batch in enumerate(train_loader):
+		x, y = batch
+		x = x.to(device)
+		y = y.to(device)
+
+		_, feature = cls_model(x)
+
+		features.append(feature.cpu().detach().numpy())
+
+		if index == 200:
+			break
+
+	for index, batch in enumerate(test_loader):
+		x, _ = batch
+		x = x.to(device)
+
+		_, featrue = cls_model(x)
+
+		features.append(featrue.cpu().detach().numpy())
+
+		if index == 200:
+			break
+
+	features = np.array([featrue for featrue in features])
+	features = features.reshape(-1, 128)
+	features = TSNE(n_components=2).fit_transform(features)
+
+	plt.scatter(features[:, 0], features[:, 1])
+	plt.show()
+
+
+
+
 
 if __name__ == '__main__':
 
@@ -97,4 +136,6 @@ if __name__ == '__main__':
 	optimizer = optim.Adam(clf.parameters(), lr=1e-4)
 
 	train(clf, optimizer, 20, mnist_train_loader, svhn_train_loader)
+	tsne_plot(clf, mnist_train_loader, svhn_train_loader)
 
+	
