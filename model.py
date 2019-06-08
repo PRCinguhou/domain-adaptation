@@ -59,8 +59,8 @@ class domain_classifier(nn.Module):
 			nn.Linear(100, 1)
 			)
 
-	def forward(self, feature):
-		reverse_feature = grad_rever_function.grad_reverse(feature)
+	def forward(self, feature, alpha):
+		reverse_feature = grad_rever_function.grad_reverse(feature, alpha)
 
 		return self.cls(reverse_feature)
 

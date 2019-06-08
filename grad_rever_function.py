@@ -12,8 +12,8 @@ class GradReverse(Function):
         return x.view_as(x)
 
     @staticmethod
-    def backward(ctx, grad_output):
-        return grad_output.neg()
+    def backward(ctx, grad_output, alpha):
+        return grad_output.neg() * alpha
 
 def grad_reverse(x):
     return GradReverse.apply(x)

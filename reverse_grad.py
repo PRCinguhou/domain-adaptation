@@ -63,6 +63,9 @@ def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader):
 		cls_model.train()
 		for index, (src_batch, tar_batch) in enumerate(zip(train_loader, test_loader)):
 
+			p = float(index + i * min([len(train_loader), len(test_loader)])) / ep / min([len(train_loader), len(test_loader)])
+			alpha = 2. / (1. + np.exp(-10 * p)) - 1
+
 			x, y = src_batch
 			x = x.to(device)
 			y = y.to(device)
@@ -71,13 +74,13 @@ def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader):
 			tar_x = tar_x.to(device)
 
 			input_x = torch.cat([x, tar_x]).to(device)
-			
+
 			domain_y = torch.cat([torch.ones(x.size(0)), torch.zeros(tar_x.size(0))]).to(device)
 
 			label_pred, feature = cls_model(input_x)
 			label_pred = label_pred[:x.size(0)]
 
-			domain_pred = domain_clf(feature)
+			domain_pred = domain_clf(feature, alpha)
 			domain_loss = loss_fn_domain(domain_pred, domain_y)
 			cls_loss = loss_fn_cls(label_pred, y)
 
