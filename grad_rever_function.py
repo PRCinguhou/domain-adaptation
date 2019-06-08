@@ -8,15 +8,16 @@ import sys
 
 class GradReverse(Function):
     @staticmethod
-    def forward(ctx, x):
+    def forward(ctx, x, alpha):
+    	self.alpha = alpha
         return x.view_as(x)
 
     @staticmethod
-    def backward(ctx, grad_output, alpha):
-        return grad_output.neg() * alpha
+    def backward(ctx, grad_output):
+        return grad_output.neg() * self.alpha
 
-def grad_reverse(x):
-    return GradReverse.apply(x)
+def grad_reverse(x, alpha):
+    return GradReverse.apply(x, alpha)
 
 
 def tsne_plot(cls_model, train_loader, test_loader, src_name, tar_name, batch_size, title):
