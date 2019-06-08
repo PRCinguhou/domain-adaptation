@@ -12,6 +12,21 @@ import torch.nn.functional as F
 from torch.autograd import Function
 from model import encoder, domain_classifier
 from LoadData import DATASET
+
+class ToRGB(object):
+
+	def __init__(self):
+		pass
+		
+	def __call__(self, sample):
+
+		sample = sample.convert('RGB')
+		return sample
+
+
+
+
+
 ###		basic setting 	 ###
 cuda = torch.cuda.is_available()
 device = torch.device('cuda' if cuda else 'cpu')
@@ -20,17 +35,27 @@ BATCH_SIZE = 100
 ###		-------------	 ###
 
 
-transform = transforms.Compose([
+
+
+mean, std = np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
+
+svhn_transform = transforms.Compose([
 	transforms.Resize((28, 28)),
-	transforms.Grayscale(),
 	transforms.ToTensor(),
+	transforms.Normalize(mean, std)
 	])
 
-###		 dataloader  	 ###
-mnistm_train_set = DATASET('./mnistm/train', './mnistm/train.csv')
-mnistm_test_set = DATASET('./mnistm/test', './mnistm/test.csv')
+mnist_transform = transforms.Compose([
+	ToRGB(),
+	transforms.Resize((28, 28)),
+	transforms.ToTensor(),
+	transforms.Normalize(mean, std)
+	])
 
-svhn_train_set = dset.SVHN(root='./svhn/', download=download, transform = transform)
+
+###		 dataloader  	 ###
+mnistm_train_set = dset.MNIST('./mnist', train=True, download=True, transform=mnist_transform)
+mnistm_test_set = dset.MNIST('./mnist', train=False, download=True, transform=mnist_transform)
 
 
 mnistm_train_loader = torch.utils.data.DataLoader(
@@ -45,6 +70,8 @@ mnistm_test_loader = torch.utils.data.DataLoader(
 	shuffle = True,
 	)
 
+
+svhn_train_set = dset.SVHN(root='./svhn/', download=download, transform = svhn_transform)
 svhn_train_loader = torch.utils.data.DataLoader(
 	dataset = svhn_train_set,
 	batch_size = BATCH_SIZE,
@@ -53,9 +80,8 @@ svhn_train_loader = torch.utils.data.DataLoader(
 
 ### ------------------   ###
 
-
 def train(clf, optimizer, ep, train_loader, test_loader):
-
+	#clf.load_state_dict(torch.load('./model/mnistm2svhn_source_only.pth'))
 	loss_fn = nn.CrossEntropyLoss()
 
 	for i in range(ep):
@@ -94,7 +120,7 @@ def train(clf, optimizer, ep, train_loader, test_loader):
 
 def tsne_plot(cls_model, train_loader, test_loader):
 
-	cls_model.load_state_dict(torch.load('./model/mnistm_clf.pth'))
+	cls_model.load_state_dict(torch.load('./model/mnistm2svhn_source_only.pth'))
 	cls_model.eval()
 	features = []
 
@@ -107,7 +133,7 @@ def tsne_plot(cls_model, train_loader, test_loader):
 
 		features.append(feature.cpu().detach().numpy())
 
-		if index == 200:
+		if index == 20:
 			break
 
 	for index, batch in enumerate(test_loader):
@@ -118,11 +144,11 @@ def tsne_plot(cls_model, train_loader, test_loader):
 
 		features.append(featrue.cpu().detach().numpy())
 
-		if index == 200:
+		if index == 20:
 			break
 
 	features = np.array([featrue for featrue in features])
-	features = features.reshape(-1, 128)
+	features = features.reshape(-1, 2048)
 	features = TSNE(n_components=2).fit_transform(features)
 
 	plt.scatter(features[:, 0], features[:, 1])
@@ -137,7 +163,7 @@ if __name__ == '__main__':
 	clf = encoder().to(device)
 	optimizer = optim.Adam(clf.parameters(), lr=1e-4)
 
-	train(clf, optimizer, 20, mnistm_train_loader, svhn_train_loader)
-	tsne_plot(clf, mnistm_train_loader, svhn_train_loader)
+	train(clf, optimizer, 50, svhn_train_loader, mnistm_train_loader)
+	tsne_plot(clf, svhn_train_loader, mnistm_train_loader)
 
 

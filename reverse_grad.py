@@ -11,6 +11,22 @@ import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from torch.autograd import Function
 from model import encoder, domain_classifier
+from LoadData import DATASET
+
+
+class ToRGB(object):
+
+	def __init__(self):
+		pass
+		
+	def __call__(self, sample):
+
+		sample = sample.convert('RGB')
+		return sample
+
+
+
+
 
 ###		basic setting 	 ###
 cuda = torch.cuda.is_available()
@@ -20,30 +36,43 @@ BATCH_SIZE = 100
 ###		-------------	 ###
 
 
-transform = transforms.Compose([
+
+
+mean, std = np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
+
+svhn_transform = transforms.Compose([
 	transforms.Resize((28, 28)),
-	transforms.Grayscale(),
 	transforms.ToTensor(),
+	transforms.Normalize(mean, std)
 	])
 
+mnist_transform = transforms.Compose([
+	ToRGB(),
+	transforms.Resize((28, 28)),
+	transforms.ToTensor(),
+	transforms.Normalize(mean, std)
+	])
+
+
 ###		 dataloader  	 ###
-mnist_train_set = dset.MNIST(root='./mnist/', train=True, download=download, transform = transform)
-mnist_test_set = dset.MNIST(root='./mnist/', train=False, transform = transform)
-svhn_train_set = dset.SVHN(root='./svhn/', download=download, transform = transform)
+mnistm_train_set = dset.MNIST('./mnist', train=True, download=True, transform=mnist_transform)
+mnistm_test_set = dset.MNIST('./mnist', train=False, download=True, transform=mnist_transform)
 
 
-mnist_train_loader = torch.utils.data.DataLoader(
-	dataset = mnist_train_set,
+mnistm_train_loader = torch.utils.data.DataLoader(
+	dataset = mnistm_train_set,
 	batch_size = BATCH_SIZE,
 	shuffle = True,
 	)
 
-mnist_test_loader = torch.utils.data.DataLoader(
-	dataset = mnist_test_set,
+mnistm_test_loader = torch.utils.data.DataLoader(
+	dataset = mnistm_test_set,
 	batch_size = BATCH_SIZE,
 	shuffle = True,
 	)
 
+
+svhn_train_set = dset.SVHN(root='./svhn/', download=download, transform = svhn_transform)
 svhn_train_loader = torch.utils.data.DataLoader(
 	dataset = svhn_train_set,
 	batch_size = BATCH_SIZE,
@@ -72,7 +101,7 @@ def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader):
 			x, y = src_batch
 			x = x.to(device)
 			y = y.to(device)
-			
+			y = y.view(-1)
 			tar_x, _ = tar_batch
 			tar_x = tar_x.to(device)
 
@@ -109,7 +138,7 @@ def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader):
 				x, y = batch
 				x = x.to(device)
 				y = y.to(device)
-				
+				y = y.view(-1)
 				y = y.view(-1)
 
 				pred, _ = cls_model(x)
@@ -118,11 +147,11 @@ def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader):
 
 			print('ac :' , ac / len(test_loader) / BATCH_SIZE)
 
-		torch.save(clf.state_dict(), './model/mnist_clf.pth')
+		torch.save(clf.state_dict(), './model/mnistm2svhn.pth')
 
 def test(cls_model, domain_clf, train_loader, test_loader):
 
-	cls_model.load_state_dict(torch.load('./model/mnist_clf.pth'))
+	cls_model.load_state_dict(torch.load('./model/mnistm2svhn.pth'))
 	cls_model.eval()
 	domain_clf.eval()
 	features = []
@@ -136,7 +165,7 @@ def test(cls_model, domain_clf, train_loader, test_loader):
 
 		features.append(feature.cpu().detach().numpy())
 
-		if index == 200:
+		if index == 20:
 			break
 
 	for index, batch in enumerate(test_loader):
@@ -147,11 +176,11 @@ def test(cls_model, domain_clf, train_loader, test_loader):
 
 		features.append(featrue.cpu().detach().numpy())
 
-		if index == 200:
+		if index == 20:
 			break
 
 	features = np.array([featrue for featrue in features])
-	features = features.reshape(-1, 128)
+	features = features.reshape(-1, 2048)
 	features = TSNE(n_components=2).fit_transform(features)
 
 	plt.scatter(features[:, 0], features[:, 1])
@@ -162,8 +191,9 @@ def test(cls_model, domain_clf, train_loader, test_loader):
 
 
 def main():
-	train(clf, domain_clf, optimizer, 20, mnist_train_loader, svhn_train_loader)
-	test(clf, domain_clf, mnist_train_loader, svhn_train_loader)
+	
+	train(clf, domain_clf, optimizer, 50, svhn_train_loader, mnistm_train_loader)
+	test(clf, domain_clf, svhn_train_loader, mnistm_train_loader)
 
 if __name__ == '__main__':
 	main()
