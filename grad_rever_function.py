@@ -26,7 +26,7 @@ def grad_reverse(x, alpha):
 
 def tsne_plot(cls_model, train_loader, test_loader, src_name, tar_name, batch_size, title):
 
-	cls_model.load_state_dict(torch.load('./model/mnistm2svhn_source_only.pth'))
+	cls_model.load_state_dict(torch.load('./model/source_only_'+src_name+'2'+tar_name+'.pth'))
 	cls_model.eval()
 	features = []
 
@@ -59,6 +59,5 @@ def tsne_plot(cls_model, train_loader, test_loader, src_name, tar_name, batch_si
 
 	plt.title('source only :' + src_name + ' to ' + tar_name)
 	plt.scatter(features[:, 0], features[:, 1])
-	plt.show()
 	plt.savefig('./tsne_plot/'+ title + '_' + src_name + '_to_' + tar_name + '.jpg')
-
+	plt.show()

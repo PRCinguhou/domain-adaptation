@@ -49,7 +49,9 @@ gray2rgb_transform = transforms.Compose([
 
 
 def train(src_model, tar_model, domain_clf, optimizer_domain, optimizer_tar, ep, train_loader, test_loader, src_name, tar_name):
-
+	print(src_model)
+	print(tar_model)
+	return
 	loss_fn_cls = nn.CrossEntropyLoss()
 	loss_fn_domain = nn.MSELoss()
 	
@@ -63,6 +65,7 @@ def train(src_model, tar_model, domain_clf, optimizer_domain, optimizer_tar, ep,
 
 		for index, (src_batch, tar_batch) in enumerate(zip(train_loader, test_loader)):
 
+			alpha = 1
 			optimizer_domain.zero_grad()
 
 			src_x, src_y = src_batch
@@ -77,10 +80,10 @@ def train(src_model, tar_model, domain_clf, optimizer_domain, optimizer_tar, ep,
 			_, src_feature = src_model(src_x)
 			_, tar_feature = tar_model(tar_x)
 
-			src_domain_pred = domain_clf(src_feature)
+			src_domain_pred = domain_clf(src_feature, alpha)
 			src_domain_label = torch.ones(src_x.size(0))
 
-			tar_domain_pred = domain_clf(tar_feature)
+			tar_domain_pred = domain_clf(tar_feature, alpha)
 			tar_domain_label = torch.zeros(tar_x.size(0))
 
 			domain_loss = loss_fn_domain(src_domain_pred, src_domain_label) + loss_fn_domain(tar_domain_pred, tar_domain_label)
@@ -93,7 +96,7 @@ def train(src_model, tar_model, domain_clf, optimizer_domain, optimizer_tar, ep,
 			optimizer_tar.zero_grad()
 
 			_, tar_feature = tar_model(tar_x)
-			tar_domain_pred = domain_clf(tar_feature)
+			tar_domain_pred = domain_clf(tar_feature, alpha)
 			tar_domain_label = torch.ones(tar_x.size(0))
 
 			loss = loss_fn_domain(tar_domain_pred, tar_domain_label)

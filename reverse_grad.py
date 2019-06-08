@@ -91,12 +91,6 @@ def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader, src_n
 			loss = cls_loss + domain_loss
 
 
-
-			if index % 100 == 0:
-				print("[%d/%d]" % (index, len(train_loader)))
-				print('cls loss : [%.5f]' % (cls_loss.item()))
-				print('domain loss : [%.5f]' % (domain_loss.item()))
-
 			optimizer.zero_grad()
 			loss.backward()
 			optimizer.step()
@@ -121,8 +115,9 @@ def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader, src_n
 
 				ac += np.sum(np.argmax(pred.cpu().detach().numpy(), axis=1) == y.cpu().detach().numpy())
 				total_loss += loss.item()
-			print('ac :' , ac / len(test_loader) / BATCH_SIZE)
-
+		
+		print('Accuracy : [%.3f], Avg Loss : [%.4f]' % ((ac / len(test_loader) / BATCH_SIZE), (total_loss / len(test_loader))) ) 
+	
 		ac_list.append(ac/len(test_loader)/BATCH_SIZE)
 		loss_list.append(total_loss / len(test_loader) / BATCH_SIZE)
 
@@ -135,23 +130,23 @@ def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader, src_n
 def main(src, tar):
 	###		 dataloader  	 ###
 	if src == 'mnist':
-		src_train_set = dset.MNIST('./mnist', train=True, download=True, transform=gray2rgb_transform)
+		src_train_set = dset.MNIST('./dataset/mnist', train=True, download=True, transform=gray2rgb_transform)
 	
 	elif src == 'mnistm':
-		src_train_set = DATASET('./mnistm/train', './mnistm/train.csv', transforms=rgb_transform)
+		src_train_set = DATASET('./dataset/mnistm/train', './dataset/mnistm/train.csv', transforms=rgb_transform)
 	
 	elif src == 'svhn':
-		src_train_set = dset.SVHN(root='./svhn/', download=download, transform=rgb_transform)
+		src_train_set = dset.SVHN(root='./dataset/svhn/', download=download, transform=rgb_transform)
 
 
 	if tar == 'svhn':
-		tar_train_set = dset.SVHN(root='./svhn/', download=download, transform = rgb_transform)
+		tar_train_set = dset.SVHN(root='./dataset/svhn/', download=download, transform = rgb_transform)
 	
 	elif tar == 'mnist':
-		tar_train_set = dset.MNIST('./mnist', train=True, download=True, transform=gray2rgb_transform)
+		tar_train_set = dset.MNIST('./dataset/mnist', train=True, download=True, transform=gray2rgb_transform)
 	
 	elif tar == 'mnistm':
-		src_train_set = DATASET('./mnistm/train', './mnistm/train.csv', transform=rgb_transform)
+		src_train_set = DATASET('./dataset/mnistm/train', './dataset/mnistm/train.csv', transform=rgb_transform)
 	
 
 

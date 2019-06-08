@@ -96,25 +96,28 @@ def train(clf, optimizer, ep, train_loader, test_loader, src_name, tar_name):
 
 
 def main(src, tar):
+
+	clf = encoder().to(device)
+	optimizer = optim.Adam(clf.parameters(), lr=1e-4)
 	###		 dataloader  	 ###
 	if src == 'mnist':
-		src_train_set = dset.MNIST('./mnist', train=True, download=True, transform=gray2rgb_transform)
+		src_train_set = dset.MNIST('./dataset/mnist', train=True, download=True, transform=gray2rgb_transform)
 	
 	elif src == 'mnistm':
-		src_train_set = DATASET('./mnistm/train', './mnistm/train.csv', transforms=rgb_transform)
+		src_train_set = DATASET('./dataset/mnistm/train', './dataset/mnistm/train.csv', transforms=rgb_transform)
 	
 	elif src == 'svhn':
-		src_train_set = dset.SVHN(root='./svhn/', download=download, transform=rgb_transform)
+		src_train_set = dset.SVHN(root='./dataset/svhn/', download=download, transform=rgb_transform)
 
 
 	if tar == 'svhn':
-		tar_train_set = dset.SVHN(root='./svhn/', download=download, transform = rgb_transform)
+		tar_train_set = dset.SVHN(root='./dataset/svhn/', download=download, transform = rgb_transform)
 	
 	elif tar == 'mnist':
-		tar_train_set = dset.MNIST('./mnist', train=True, download=True, transform=gray2rgb_transform)
+		tar_train_set = dset.MNIST('./dataset/mnist', train=True, download=True, transform=gray2rgb_transform)
 	
 	elif tar == 'mnistm':
-		src_train_set = DATASET('./mnistm/train', './mnistm/train.csv', transform=rgb_transform)
+		src_train_set = DATASET('./dataset/mnistm/train', './dataset/mnistm/train.csv', transform=rgb_transform)
 	
 
 
@@ -131,21 +134,23 @@ def main(src, tar):
 		)
 
 	# train
-	ac_list, loss_list = train(clf, domain_clf, optimizer, EP, src_train_loader, tar_train_loader, src, tar)
+	ac_list, loss_list = train(clf, optimizer, EP, src_train_loader, tar_train_loader, src, tar)
 	ac_list = np.array(ac_list)
 	loss_list = np.array(loss_list)
 	epoch = [i for i in range(EP)]
 	
 	# plot tsne
-	my_function.tsne_plot(clf, domain_clf, src_train_loader, tar_train_loader, src, tar, BATCH_SIZE, 'source_only')
+	my_function.tsne_plot(clf, src_train_loader, tar_train_loader, src, tar, BATCH_SIZE, 'source_only')
 
 	### plot learning curve  ###
+	plt.figure()
 	plt.plot(epoch, ac_list)
 	plt.xlabel('EPOCH')
 	plt.ylabel('Accuracy')
 	plt.title('Source_only : ' + src + ' to ' + tar)
 	plt.savefig('./learning_curve/source_only_' + src + '_to_' + tar + '_accuracy.jpg')
 
+	plt.figure()
 	plt.plot(epoch, loss_list)
 	plt.xlabel('EPOCH')
 	plt.ylabel('Loss')
