@@ -115,7 +115,6 @@ def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader, src_n
 				x = x.to(device)
 				y = y.to(device)
 				y = y.view(-1)
-				y = y.view(-1)
 
 				pred, _ = clf(x)
 				loss = loss_fn_cls(pred, y)

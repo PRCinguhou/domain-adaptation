@@ -84,7 +84,7 @@ def train(clf, optimizer, ep, train_loader, test_loader, src_name, tar_name):
 			total_loss += loss.item()
 
 
-		print('Accuracy : [%.3f], Avg Loss : [%d]' % ((ac / len(test_loader) / BATCH_SIZE), (total_loss / len(test_loader) / BATCH_SIZE)) ) 
+		print('Accuracy : [%.3f], Avg Loss : [%.4f]' % ((ac / len(test_loader) / BATCH_SIZE), (total_loss / len(test_loader))) ) 
 		
 		ac_list.append(ac/len(test_loader)/BATCH_SIZE)
 		loss_list.append(total_loss / len(test_loader) / BATCH_SIZE)
