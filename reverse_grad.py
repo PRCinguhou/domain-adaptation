@@ -13,6 +13,8 @@ from torch.autograd import Function
 from model import encoder, domain_classifier
 from LoadData import DATASET
 import sys
+import grad_rever_function as my_function
+
 
 class ToRGB(object):
 
@@ -32,27 +34,20 @@ download = True
 BATCH_SIZE = 100
 ###		-------------	 ###
 
-
-
-
 mean, std = np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
 
-svhn_transform = transforms.Compose([
+rgb_transform = transforms.Compose([
 	transforms.Resize((28, 28)),
 	transforms.ToTensor(),
 	transforms.Normalize(mean, std)
 	])
 
-mnist_transform = transforms.Compose([
+gray2rgb_transform = transforms.Compose([
 	ToRGB(),
 	transforms.Resize((28, 28)),
 	transforms.ToTensor(),
 	transforms.Normalize(mean, std)
 	])
-
-
-
-
 
 clf = encoder().to(device)
 domain_clf = domain_classifier().to(device)
@@ -119,43 +114,6 @@ def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader):
 
 		torch.save(clf.state_dict(), './model/mnistm2svhn.pth')
 
-def test(cls_model, domain_clf, train_loader, test_loader):
-
-	cls_model.load_state_dict(torch.load('./model/mnistm2svhn.pth'))
-	cls_model.eval()
-	domain_clf.eval()
-	features = []
-
-	for index, batch in enumerate(train_loader):
-		x, y = batch
-		x = x.to(device)
-		y = y.to(device)
-
-		_, feature = cls_model(x)
-
-		features.append(feature.cpu().detach().numpy())
-
-		if index == 20:
-			break
-
-	for index, batch in enumerate(test_loader):
-		x, _ = batch
-		x = x.to(device)
-
-		_, featrue = cls_model(x)
-
-		features.append(featrue.cpu().detach().numpy())
-
-		if index == 20:
-			break
-
-	features = np.array([featrue for featrue in features])
-	features = features.reshape(-1, 2048)
-	features = TSNE(n_components=2).fit_transform(features)
-
-	plt.scatter(features[:, 0], features[:, 1])
-	plt.show()
-
 
 
 
@@ -163,23 +121,23 @@ def test(cls_model, domain_clf, train_loader, test_loader):
 def main(src, tar):
 	###		 dataloader  	 ###
 	if src == 'mnist':
-		src_train_set = dset.MNIST('./mnist', train=True, download=True, transform=mnist_transform)
+		src_train_set = dset.MNIST('./mnist', train=True, download=True, transform=gray2rgb_transform)
 	
 	elif src == 'mnistm':
-		src_train_set = DATASET('./mnistm/train', './mnistm/train.csv')
+		src_train_set = DATASET('./mnistm/train', './mnistm/train.csv', transforms=rgb_transform)
 	
 	elif src == 'svhn':
-		src_train_set = dset.SVHN(root='./svhn/', download=download, transform = svhn_transform)
+		src_train_set = dset.SVHN(root='./svhn/', download=download, transform=rgb_transform)
 
 
 	if tar == 'svhn':
-		tar_train_set = dset.SVHN(root='./svhn/', download=download, transform = svhn_transform)
+		tar_train_set = dset.SVHN(root='./svhn/', download=download, transform = rgb_transform)
 	
 	elif tar == 'mnist':
-		tar_train_set = dset.MNIST('./mnist', train=True, download=True, transform=mnist_transform)
+		tar_train_set = dset.MNIST('./mnist', train=True, download=True, transform=gray2rgb_transform)
 	
 	elif tar == 'mnistm':
-		src_train_set = DATASET('./mnistm/train', './mnistm/train.csv')
+		src_train_set = DATASET('./mnistm/train', './mnistm/train.csv', transform=rgb_transform)
 	
 
 
@@ -195,19 +153,33 @@ def main(src, tar):
 		shuffle = True,
 		)
 
-	### ------------------   ###
+	# train
+	ac_list, loss_list = train(clf, domain_clf, optimizer, 50, src_train_loader, tar_train_loader)
+	ac_list = np.array(ac_list)
+	
+	# plot tsne
+	loss_list = np.array(loss_list)
+	epoch = [i for i in range(EP)]
+	my_function.tsne_plot(clf, domain_clf, src_train_loader, tar_train_loader, src, tar, BATCH_SIZE, 'domian_adapt')
 
-	train(clf, domain_clf, optimizer, 50, src_train_loader, tar_train_loader)
-	test(clf, domain_clf, src_train_loader, tar_train_loader)
+	### plot learning curve  ###
+	plt.plot(ac_list, epoch)
+	plt.xlabel('EPOCH')
+	plt.ylabel('Accuracy')
+	plt.title('domian_adapt : ' + src + ' to ' + tar)
+	plt.savefig('./learning_curve/domian_adapt_' + src + '_to_' + tar + '_accuracy.jpg')
+
+	plt.plot(loss_list, epoch)
+	plt.xlabel('EPOCH')
+	plt.ylabel('Loss')
+	plt.title('domian_adapt : ' + src + ' to ' + tar)
+	plt.savefig('./learning_curve/domian_adapt_' + src + '_to_' + tar + '_loss.jpg')
+	
+
 
 if __name__ == '__main__':
+
 	source, target = sys.argv[1:]
 	main(source, target)
-
-
-
-
-
-
 
 
