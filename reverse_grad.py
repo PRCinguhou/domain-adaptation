@@ -12,7 +12,7 @@ import torch.nn.functional as F
 from torch.autograd import Function
 from model import encoder, domain_classifier
 from LoadData import DATASET
-
+import sys
 
 class ToRGB(object):
 
@@ -23,9 +23,6 @@ class ToRGB(object):
 
 		sample = sample.convert('RGB')
 		return sample
-
-
-
 
 
 ###		basic setting 	 ###
@@ -53,33 +50,6 @@ mnist_transform = transforms.Compose([
 	transforms.Normalize(mean, std)
 	])
 
-
-###		 dataloader  	 ###
-mnistm_train_set = dset.MNIST('./mnist', train=True, download=True, transform=mnist_transform)
-mnistm_test_set = dset.MNIST('./mnist', train=False, download=True, transform=mnist_transform)
-
-
-mnistm_train_loader = torch.utils.data.DataLoader(
-	dataset = mnistm_train_set,
-	batch_size = BATCH_SIZE,
-	shuffle = True,
-	)
-
-mnistm_test_loader = torch.utils.data.DataLoader(
-	dataset = mnistm_test_set,
-	batch_size = BATCH_SIZE,
-	shuffle = True,
-	)
-
-
-svhn_train_set = dset.SVHN(root='./svhn/', download=download, transform = svhn_transform)
-svhn_train_loader = torch.utils.data.DataLoader(
-	dataset = svhn_train_set,
-	batch_size = BATCH_SIZE,
-	shuffle = True,
-	)
-
-### ------------------   ###
 
 
 
@@ -190,13 +160,49 @@ def test(cls_model, domain_clf, train_loader, test_loader):
 
 
 
-def main():
+def main(src, tar):
+	###		 dataloader  	 ###
+	if src == 'mnist':
+		src_train_set = dset.MNIST('./mnist', train=True, download=True, transform=mnist_transform)
 	
-	train(clf, domain_clf, optimizer, 50, svhn_train_loader, mnistm_train_loader)
-	test(clf, domain_clf, svhn_train_loader, mnistm_train_loader)
+	elif src == 'mnistm':
+		src_train_set = DATASET('./mnistm/train', './mnistm/train.csv')
+	
+	elif src == 'svhn':
+		src_train_set = dset.SVHN(root='./svhn/', download=download, transform = svhn_transform)
+
+
+	if tar == 'svhn':
+		tar_train_set = dset.SVHN(root='./svhn/', download=download, transform = svhn_transform)
+	
+	elif tar == 'mnist':
+		tar_train_set = dset.MNIST('./mnist', train=True, download=True, transform=mnist_transform)
+	
+	elif tar == 'mnistm':
+		src_train_set = DATASET('./mnistm/train', './mnistm/train.csv')
+	
+
+
+	src_train_loader = torch.utils.data.DataLoader(
+		dataset = src_train_set,
+		batch_size = BATCH_SIZE,
+		shuffle = True,
+		)
+
+	tar_train_loader = torch.utils.data.DataLoader(
+		dataset = tar_train_set,
+		batch_size = BATCH_SIZE,
+		shuffle = True,
+		)
+
+	### ------------------   ###
+
+	train(clf, domain_clf, optimizer, 50, src_train_loader, tar_train_loader)
+	test(clf, domain_clf, src_train_loader, tar_train_loader)
 
 if __name__ == '__main__':
-	main()
+	source, target = sys.argv[1:]
+	main(source, target)
 
 
 

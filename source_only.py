@@ -39,46 +39,18 @@ BATCH_SIZE = 100
 
 mean, std = np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
 
-svhn_transform = transforms.Compose([
+rgb_transform = transforms.Compose([
 	transforms.Resize((28, 28)),
 	transforms.ToTensor(),
 	transforms.Normalize(mean, std)
 	])
 
-mnist_transform = transforms.Compose([
+gray2rgb_transform = transforms.Compose([
 	ToRGB(),
 	transforms.Resize((28, 28)),
 	transforms.ToTensor(),
 	transforms.Normalize(mean, std)
 	])
-
-
-###		 dataloader  	 ###
-mnistm_train_set = dset.MNIST('./mnist', train=True, download=True, transform=mnist_transform)
-mnistm_test_set = dset.MNIST('./mnist', train=False, download=True, transform=mnist_transform)
-
-
-mnistm_train_loader = torch.utils.data.DataLoader(
-	dataset = mnistm_train_set,
-	batch_size = BATCH_SIZE,
-	shuffle = True,
-	)
-
-mnistm_test_loader = torch.utils.data.DataLoader(
-	dataset = mnistm_test_set,
-	batch_size = BATCH_SIZE,
-	shuffle = True,
-	)
-
-
-svhn_train_set = dset.SVHN(root='./svhn/', download=download, transform = svhn_transform)
-svhn_train_loader = torch.utils.data.DataLoader(
-	dataset = svhn_train_set,
-	batch_size = BATCH_SIZE,
-	shuffle = True,
-	)
-
-### ------------------   ###
 
 def train(clf, optimizer, ep, train_loader, test_loader):
 	#clf.load_state_dict(torch.load('./model/mnistm2svhn_source_only.pth'))
@@ -158,10 +130,50 @@ def tsne_plot(cls_model, train_loader, test_loader):
 
 
 
-if __name__ == '__main__':
+def main(src, tar):
+	###		 dataloader  	 ###
+	if src == 'mnist':
+		src_train_set = dset.MNIST('./mnist', train=True, download=True, transform=gray2rgb_transform)
+	
+	elif src == 'mnistm':
+		src_train_set = DATASET('./mnistm/train', './mnistm/train.csv', transforms=rgb_transform)
+	
+	elif src == 'svhn':
+		src_train_set = dset.SVHN(root='./svhn/', download=download, transform=rgb_transform)
 
-	clf = encoder().to(device)
-	optimizer = optim.Adam(clf.parameters(), lr=1e-4)
+
+	if tar == 'svhn':
+		tar_train_set = dset.SVHN(root='./svhn/', download=download, transform = rgb_transform)
+	
+	elif tar == 'mnist':
+		tar_train_set = dset.MNIST('./mnist', train=True, download=True, transform=gray2rgb_transform)
+	
+	elif tar == 'mnistm':
+		src_train_set = DATASET('./mnistm/train', './mnistm/train.csv', transform=rgb_transform)
+	
+
+
+	src_train_loader = torch.utils.data.DataLoader(
+		dataset = src_train_set,
+		batch_size = BATCH_SIZE,
+		shuffle = True,
+		)
+
+	tar_train_loader = torch.utils.data.DataLoader(
+		dataset = tar_train_set,
+		batch_size = BATCH_SIZE,
+		shuffle = True,
+		)
+
+	### ------------------   ###
+
+	train(clf, domain_clf, optimizer, 50, src_train_loader, tar_train_loader)
+	test(clf, domain_clf, src_train_loader, tar_train_loader)
+
+if __name__ == '__main__':
+	
+	source, target = sys.argv[1:]
+	main(source, target)
 
 	train(clf, optimizer, 50, svhn_train_loader, mnistm_train_loader)
 	tsne_plot(clf, svhn_train_loader, mnistm_train_loader)
