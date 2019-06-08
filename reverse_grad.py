@@ -31,7 +31,8 @@ class ToRGB(object):
 cuda = torch.cuda.is_available()
 device = torch.device('cuda' if cuda else 'cpu')
 download = True
-BATCH_SIZE = 100
+BATCH_SIZE = 256
+EP = 70
 ###		-------------	 ###
 
 mean, std = np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
@@ -54,13 +55,15 @@ domain_clf = domain_classifier().to(device)
 optimizer = optim.Adam(list(clf.parameters()) + list(domain_clf.parameters()) , lr=1e-4)
 
 
-def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader):
+def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader, src_name, tar_name):
 	loss_fn_cls = nn.CrossEntropyLoss()
 	loss_fn_domain = nn.MSELoss()
+	ac_list, loss_list = [], []
 
 	for i in range(ep):
 
 		cls_model.train()
+		
 		for index, (src_batch, tar_batch) in enumerate(zip(train_loader, test_loader)):
 
 			p = float(index + i * min([len(train_loader), len(test_loader)])) / ep / min([len(train_loader), len(test_loader)])
@@ -73,18 +76,21 @@ def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader):
 			tar_x, _ = tar_batch
 			tar_x = tar_x.to(device)
 
-			input_x = torch.cat([x, tar_x]).to(device)
+			src_pred, src_feature = clf(x)
+			_, tar_feature = clf(tar_x)
 
-			domain_y = torch.cat([torch.ones(x.size(0)), torch.zeros(tar_x.size(0))]).to(device)
+			label_loss = loss_fn_cls(src_pred, y)
+			src_domain = domain_clf(src_feature, alpha)
+			tar_domain = domain_clf(tar_feature, alpha)
 
-			label_pred, feature = cls_model(input_x)
-			label_pred = label_pred[:x.size(0)]
+			src_domain_label = torch.ones(x.size(0)).to(device)
+			tar_domain_label = torch.zeros(tar_x.size(0)).to(device)
+			domain_loss = loss_fn_domain(src_domain, src_domain_label) + loss_fn_domain(tar_domain, tar_domain_label)
+			cls_loss = loss_fn_cls(src_pred, y)
 
-			domain_pred = domain_clf(feature, alpha)
-			domain_loss = loss_fn_domain(domain_pred, domain_y)
-			cls_loss = loss_fn_cls(label_pred, y)
+			loss = cls_loss + domain_loss
 
-			loss = domain_loss + cls_loss
+
 
 			if index % 100 == 0:
 				print("[%d/%d]" % (index, len(train_loader)))
@@ -99,7 +105,9 @@ def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader):
 
 		cls_model.eval()
 		domain_clf.eval()
+
 		ac = 0
+		total_loss=0
 		with torch.no_grad():
 			for batch in test_loader:
 				
@@ -109,14 +117,18 @@ def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader):
 				y = y.view(-1)
 				y = y.view(-1)
 
-				pred, _ = cls_model(x)
+				pred, _ = clf(x)
+				loss = loss_fn_cls(pred, y)
 
-				ac += np.sum(np.argmax(pred.cpu().detach().numpy(), axis = 1 ) == y.cpu().detach().numpy())
-
+				ac += np.sum(np.argmax(pred.cpu().detach().numpy(), axis=1) == y.cpu().detach().numpy())
+				total_loss += loss.item()
 			print('ac :' , ac / len(test_loader) / BATCH_SIZE)
 
-		torch.save(clf.state_dict(), './model/mnistm2svhn.pth')
+		ac_list.append(ac/len(test_loader)/BATCH_SIZE)
+		loss_list.append(total_loss / len(test_loader) / BATCH_SIZE)
 
+		torch.save(clf.state_dict(), './model/reverse_grad_'+src_name+'2'+tar_name+'.pth')
+	return ac_list, loss_list
 
 
 
@@ -157,22 +169,24 @@ def main(src, tar):
 		)
 
 	# train
-	ac_list, loss_list = train(clf, domain_clf, optimizer, 50, src_train_loader, tar_train_loader)
-	ac_list = np.array(ac_list)
+	ac_list, loss_list = train(clf, domain_clf, optimizer, EP, src_train_loader, tar_train_loader, src, tar)
+	ac_list = np.array(ac_list).flatten()
 	
 	# plot tsne
-	loss_list = np.array(loss_list)
+	loss_list = np.array(loss_list).flatten()
 	epoch = [i for i in range(EP)]
-	my_function.tsne_plot(clf, domain_clf, src_train_loader, tar_train_loader, src, tar, BATCH_SIZE, 'domian_adapt')
+	my_function.tsne_plot(clf, src_train_loader, tar_train_loader, src, tar, BATCH_SIZE, 'domian_adapt')
 
 	### plot learning curve  ###
-	plt.plot(ac_list, epoch)
+	plt.figure()
+	plt.plot(epoch, ac_list)
 	plt.xlabel('EPOCH')
 	plt.ylabel('Accuracy')
 	plt.title('domian_adapt : ' + src + ' to ' + tar)
 	plt.savefig('./learning_curve/domian_adapt_' + src + '_to_' + tar + '_accuracy.jpg')
 
-	plt.plot(loss_list, epoch)
+	plt.figure()
+	plt.plot(epoch, loss_list)
 	plt.xlabel('EPOCH')
 	plt.ylabel('Loss')
 	plt.title('domian_adapt : ' + src + ' to ' + tar)

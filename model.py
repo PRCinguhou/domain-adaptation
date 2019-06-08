@@ -56,7 +56,8 @@ class domain_classifier(nn.Module):
 			nn.Linear(2048, 100),
 			nn.BatchNorm1d(100),
 			nn.ReLU(True),
-			nn.Linear(100, 1)
+			nn.Linear(100, 1),
+			nn.Sigmoid()
 			)
 
 	def forward(self, feature, alpha):

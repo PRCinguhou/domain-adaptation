@@ -27,7 +27,7 @@ cuda = torch.cuda.is_available()
 device = torch.device('cuda' if cuda else 'cpu')
 download = True
 BATCH_SIZE = 100
-EP = 50
+EP = 30
 
 ###		-------------	 ###
 
@@ -47,7 +47,7 @@ gray2rgb_transform = transforms.Compose([
 	transforms.Normalize(mean, std)
 	])
 
-def train(clf, optimizer, ep, train_loader, test_loader):
+def train(clf, optimizer, ep, train_loader, test_loader, src_name, tar_name):
 	#clf.load_state_dict(torch.load('./model/mnistm2svhn_source_only.pth'))
 	loss_fn = nn.CrossEntropyLoss()
 	ac_list, loss_list = [], []
@@ -89,7 +89,7 @@ def train(clf, optimizer, ep, train_loader, test_loader):
 		ac_list.append(ac/len(test_loader)/BATCH_SIZE)
 		loss_list.append(total_loss / len(test_loader) / BATCH_SIZE)
 
-		torch.save(clf.state_dict(), './model/mnistm2svhn_source_only.pth')
+		torch.save(clf.state_dict(), './model/source_only_'+src_name+'2'+tar_name+'.pth')
 
 	return ac_list, loss_list
 
@@ -131,7 +131,7 @@ def main(src, tar):
 		)
 
 	# train
-	ac_list, loss_list = train(clf, domain_clf, optimizer, 50, src_train_loader, tar_train_loader)
+	ac_list, loss_list = train(clf, domain_clf, optimizer, EP, src_train_loader, tar_train_loader, src, tar)
 	ac_list = np.array(ac_list)
 	loss_list = np.array(loss_list)
 	epoch = [i for i in range(EP)]
@@ -140,13 +140,13 @@ def main(src, tar):
 	my_function.tsne_plot(clf, domain_clf, src_train_loader, tar_train_loader, src, tar, BATCH_SIZE, 'source_only')
 
 	### plot learning curve  ###
-	plt.plot(ac_list, epoch)
+	plt.plot(epoch, ac_list)
 	plt.xlabel('EPOCH')
 	plt.ylabel('Accuracy')
 	plt.title('Source_only : ' + src + ' to ' + tar)
 	plt.savefig('./learning_curve/source_only_' + src + '_to_' + tar + '_accuracy.jpg')
 
-	plt.plot(loss_list, epoch)
+	plt.plot(epoch, loss_list)
 	plt.xlabel('EPOCH')
 	plt.ylabel('Loss')
 	plt.title('Source_only : ' + src + ' to ' + tar)

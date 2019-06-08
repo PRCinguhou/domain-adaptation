@@ -5,20 +5,24 @@ import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from torch.autograd import Function
 import sys
+import torch
+
+cuda = torch.cuda.is_available()
+device = torch.device('cuda' if cuda else 'cpu')
 
 class GradReverse(Function):
-    @staticmethod
-    def forward(ctx, x, alpha):
-    	self.alpha = alpha
-        return x.view_as(x)
+	@staticmethod
+	def forward(ctx, x, alpha):
+		ctx.alpha = alpha
+		return x.view_as(x)
 
-    @staticmethod
-    def backward(ctx, grad_output):
-        return grad_output.neg() * self.alpha
+	@staticmethod
+	def backward(ctx, grad_output):
+		return grad_output.neg() * ctx.alpha, None
 
 def grad_reverse(x, alpha):
-    return GradReverse.apply(x, alpha)
-
+	return GradReverse.apply(x, alpha)
+	
 
 def tsne_plot(cls_model, train_loader, test_loader, src_name, tar_name, batch_size, title):
 
@@ -35,7 +39,7 @@ def tsne_plot(cls_model, train_loader, test_loader, src_name, tar_name, batch_si
 
 		features.append(feature.cpu().detach().numpy())
 
-		if index * BATCH_SIZE > 2000:
+		if index * batch_size > 2000:
 			break
 
 	for index, batch in enumerate(test_loader):
@@ -46,7 +50,7 @@ def tsne_plot(cls_model, train_loader, test_loader, src_name, tar_name, batch_si
 
 		features.append(featrue.cpu().detach().numpy())
 
-		if index * BATCH_SIZE > 2000:
+		if index * batch_size > 2000:
 			break
 
 	features = np.array([featrue for featrue in features])
