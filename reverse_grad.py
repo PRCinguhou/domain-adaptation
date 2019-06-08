@@ -71,7 +71,7 @@ def train(cls_model, domain_clf, optimizer, ep, train_loader, test_loader):
 			tar_x = tar_x.to(device)
 
 			input_x = torch.cat([x, tar_x]).to(device)
-
+			
 			domain_y = torch.cat([torch.ones(x.size(0)), torch.zeros(tar_x.size(0))]).to(device)
 
 			label_pred, feature = cls_model(input_x)

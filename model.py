@@ -53,10 +53,10 @@ class domain_classifier(nn.Module):
 		super(domain_classifier, self).__init__()
 
 		self.cls = nn.Sequential(
-			nn.Linear(2048, 256),
-			nn.BatchNorm1d(256),
+			nn.Linear(2048, 100),
+			nn.BatchNorm1d(100),
 			nn.ReLU(True),
-			nn.Linear(256, 1)
+			nn.Linear(100, 1)
 			)
 
 	def forward(self, feature):
