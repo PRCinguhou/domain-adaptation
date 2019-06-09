@@ -32,7 +32,7 @@ cuda = torch.cuda.is_available()
 device = torch.device('cuda' if cuda else 'cpu')
 download = True
 BATCH_SIZE = 256
-EP = 70
+EP = 30
 ###		-------------	 ###
 
 mean, std = np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
@@ -169,7 +169,7 @@ def main(src, tar):
 	# plot tsne
 	loss_list = np.array(loss_list).flatten()
 	epoch = [i for i in range(EP)]
-	my_function.tsne_plot(clf, src_train_loader, tar_train_loader, src, tar, BATCH_SIZE, 'domian_adapt')
+	my_function.tsne_plot(clf, src_train_loader, tar_train_loader, src, tar, BATCH_SIZE, 'reverse_grad')
 
 	### plot learning curve  ###
 	plt.figure()
