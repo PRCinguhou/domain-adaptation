@@ -6,9 +6,15 @@ for source only :
 - python source_only.py $1 $2
   - $1 : source domain 
   - $2 : target domain
-exmaple :
+
 ```
 python source_only.py svhn mnist
 ```
-
+for Grad Reverse :
+- python reverse_grad.py $1 $2
+  - $1 : source domain
+  - $2 : target domain
+```
+python reverse_grad svhn mnist
+```
 
