@@ -8,7 +8,8 @@ python source_only.py $1 $2
 $1 : source domain 
 $2 : target domain
 exmaple :
-'''
+```
 python source_only.py svhn mnist
-'''
+```
+
 
