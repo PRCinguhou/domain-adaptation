@@ -49,14 +49,14 @@ class encoder(nn.Module):
 
 class domain_classifier(nn.Module):
 
-	def __init__(self):
+	def __init__(self, output_dim=1):
 		super(domain_classifier, self).__init__()
 
 		self.cls = nn.Sequential(
 			nn.Linear(2048, 100),
 			nn.BatchNorm1d(100),
 			nn.ReLU(True),
-			nn.Linear(100, 1),
+			nn.Linear(100, output_dim),
 			nn.Sigmoid()
 			)
 

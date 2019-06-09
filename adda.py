@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from torch.autograd import Function
 from model import encoder, domain_classifier
-
+import sys
 
 class ToRGB(object):
 
@@ -28,7 +28,7 @@ class ToRGB(object):
 cuda = torch.cuda.is_available()
 device = torch.device('cuda' if cuda else 'cpu')
 download = True
-BATCH_SIZE = 100
+BATCH_SIZE = 256
 ###		-------------	 ###
 
 mean, std = np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
@@ -49,11 +49,11 @@ gray2rgb_transform = transforms.Compose([
 
 
 def train(src_model, tar_model, domain_clf, optimizer_domain, optimizer_tar, ep, train_loader, test_loader, src_name, tar_name):
-	print(src_model)
-	print(tar_model)
-	return
+	
+	tar_model.state_dict()['cls.weight'].data.copy_(src_model.state_dict()['cls.weight'])
+
 	loss_fn_cls = nn.CrossEntropyLoss()
-	loss_fn_domain = nn.MSELoss()
+	loss_fn_domain = nn.CrossEntropyLoss()
 	
 	ac_list = []
 	loss_list = []
@@ -81,10 +81,10 @@ def train(src_model, tar_model, domain_clf, optimizer_domain, optimizer_tar, ep,
 			_, tar_feature = tar_model(tar_x)
 
 			src_domain_pred = domain_clf(src_feature, alpha)
-			src_domain_label = torch.ones(src_x.size(0))
+			src_domain_label = torch.ones(src_x.size(0)).type(torch.LongTensor).to(device)
 
 			tar_domain_pred = domain_clf(tar_feature, alpha)
-			tar_domain_label = torch.zeros(tar_x.size(0))
+			tar_domain_label = torch.zeros(tar_x.size(0)).type(torch.LongTensor).to(device)
 
 			domain_loss = loss_fn_domain(src_domain_pred, src_domain_label) + loss_fn_domain(tar_domain_pred, tar_domain_label)
 
@@ -97,14 +97,14 @@ def train(src_model, tar_model, domain_clf, optimizer_domain, optimizer_tar, ep,
 
 			_, tar_feature = tar_model(tar_x)
 			tar_domain_pred = domain_clf(tar_feature, alpha)
-			tar_domain_label = torch.ones(tar_x.size(0))
+			tar_domain_label = torch.ones(tar_x.size(0)).type(torch.LongTensor).to(device)
 
 			loss = loss_fn_domain(tar_domain_pred, tar_domain_label)
 			loss.backward()
 			optimizer_tar.step()
 
 			if index % 100 == 0:
-				print('EP : [%d], [%d]/[%d]' % (i, index, min(len(train_loader), len(test_loader))))
+				print('EP : [%d], [%d]/[%d] Domain loss : [%.4f]' % (i, index, min(len(train_loader), len(test_loader)), domain_loss))
 
 		src_model.eval()
 		tar_model.eval()
@@ -130,17 +130,17 @@ def train(src_model, tar_model, domain_clf, optimizer_domain, optimizer_tar, ep,
 
 		print("AVG loss : [%.4f]" % (avg_loss/len(test_loader)))
 		print('Accuracy : [%.4f]' % (ac / len(test_loader) / BATCH_SIZE))
-
+	return ac_list, loss_list
 
 def main(src, tar):
 
 
 	src_clf = encoder().to(device)
 	src_clf.load_state_dict(torch.load('./model/reverse_grad_'+src+'2'+tar+'.pth'))
-
+	src_clf.eval()
 	tar_clf = encoder().to(device)
 
-	domain_clf = domain_classifier().to(device)
+	domain_clf = domain_classifier(2).to(device)
 	optimizer_domain = optim.Adam(domain_clf.parameters(), lr=1e-4)
 	optimizer_tar = optim.Adam(tar_clf.parameters(), lr=1e-4)
 
@@ -180,13 +180,13 @@ def main(src, tar):
 		)
 
 	# train
-	ac_list, loss_list = train(clf, domain_clf, optimizer_domain, optimizer_tar, 50, src_train_loader, tar_train_loader)
+	ac_list, loss_list = train(src_clf, tar_clf, domain_clf, optimizer_domain, optimizer_tar, 50, src_train_loader, tar_train_loader, src, tar)
 	ac_list = np.array(ac_list)
 	
 	# plot tsne
 	loss_list = np.array(loss_list)
 	epoch = [i for i in range(EP)]
-	my_function.tsne_plot(clf, domain_clf, src_train_loader, tar_train_loader, src, tar, BATCH_SIZE, 'adda_')
+	my_function.tsne_plot(clf, src_train_loader, tar_train_loader, src, tar, BATCH_SIZE, 'adda_')
 
 	### plot learning curve  ###
 	plt.plot(ac_list, epoch)
