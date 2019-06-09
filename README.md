@@ -21,7 +21,8 @@ python reverse_grad svhn mnist
 
 ## Result
 
-|              | SVHN (Source) --> MNIST(Target) |
-| :----------: | :-----------------------------: |
-| source only  |              62%                |
-| reverse grad |              75%                |
+|              | SVHN (Source) --> MNIST(Target) | MNISTM (Source) --> MNIST (Target) |
+| :----------: | :-----------------------------: | :--------------------------------: |
+| source only  |        62% (30 Epoch)           |             98.5(30 Epoch)         |
+| reverse grad |        75% (30 Epoch)           |             98.8(30 Epoch)         |
+ 
