@@ -1,9 +1,9 @@
-# Domain Adaption - Pytorch
+## Domain Adaption - Pytorch
 A Pytorch implement for source-only & [Grad Reverse layer](https://arxiv.org/pdf/1409.7495.pdf)
 
-# Usage 
+## Usage 
 First you need to put the dataset in "dataset" folder.  
-for source only :
+For source only :
 - python source_only.py $1 $2
   - $1 : source domain 
   - $2 : target domain
@@ -19,3 +19,9 @@ for Grad Reverse :
 python reverse_grad svhn mnist
 ```
 
+## Result
+
+|              | SVHN (Source) --> MNIST(Target) |
+| :----------: | :-----------------------------: |
+| source only  |              62%                |
+| reverse grad |              75%                |
