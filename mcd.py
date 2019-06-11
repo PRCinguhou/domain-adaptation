@@ -136,7 +136,7 @@ def train(encoder, cls_model_1, cls_model_2, optimizer_encoder, optimizer_clf_1,
 			optimizer_encoder.step()
 
 
-			if index % 10 == 0:
+			if index % 100 == 0:
 				print('[%d]/[%d]' % (index, min([len(train_loader), len(test_loader)])))
 			
 			
