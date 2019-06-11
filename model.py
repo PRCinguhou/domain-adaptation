@@ -113,7 +113,7 @@ class predictor(nn.Module):
 			nn.Linear(1024, 10)
 			)
 
-	def forward(self, feature, alpha, reverse=False):
+	def forward(self, feature, alpha=1, reverse=False):
 		if reverse:
 			reverse_feature = grad_rever_function.grad_reverse(feature, alpha)
 			return self.fc(reverse_feature)
