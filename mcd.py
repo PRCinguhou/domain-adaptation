@@ -259,7 +259,7 @@ def main(src, tar):
 	optimizer_clf_2 = optim.Adam(cls_c2.parameters(), lr=1e-4)
 
 	# train
-	ac_list, loss_list = train(G, cls_c1, cls_c2, optimizer_encoder, optimizer_clf_1. optimizer_clf_2, EP, src_train_loader, tar_train_loader, src, tar)
+	ac_list, loss_list = train(G, cls_c1, cls_c2, optimizer_encoder, optimizer_clf_1, optimizer_clf_2, EP, src_train_loader, tar_train_loader, src, tar)
 	ac_list = np.array(ac_list).flatten()
 	
 	# plot tsne
