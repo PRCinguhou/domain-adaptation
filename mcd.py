@@ -203,7 +203,6 @@ def main(src, tar):
 	cls_c1.apply(weights_init_uniform)
 	cls_c2.apply(weights_init_uniform)
 
-	
 
 	###		 dataloader  	 ###
 	if src == 'mnist':
