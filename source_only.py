@@ -12,6 +12,7 @@ import torch.nn.functional as F
 from torch.autograd import Function
 from model import encoder, domain_classifier
 from LoadData import DATASET
+from LoadData_1 import DATASET_1
 import grad_rever_function as my_function
 import sys
 
@@ -100,7 +101,7 @@ def main(src, tar):
 
 	clf = encoder().to(device)
 	optimizer = optim.Adam(clf.parameters(), lr=1e-4)
-	###		 dataloader  	 ###
+		###		 dataloader  	 ###
 	if src == 'mnist':
 		src_train_set = dset.MNIST('./dataset/mnist', train=True, download=True, transform=gray2rgb_transform)
 	
@@ -110,6 +111,23 @@ def main(src, tar):
 	elif src == 'svhn':
 		src_train_set = dset.SVHN(root='./dataset/svhn/', download=download, transform=rgb_transform)
 
+	elif src == 'usps':
+		src_train_set = DATASET('./dataset/usps/train', './dataset/usps/train.csv', transforms=gray2rgb_transform)
+	
+	elif src == 'quickdraw':
+		src_train_set = DATASET_1('quickdraw', 'quickdraw_train.csv')
+	
+	elif src == 'real':
+		src_train_set = DATASET_1('real', 'real_train.csv')
+	
+	elif src == 'sketch':
+		src_train_set = DATASET_1('sketch', 'sketch_train.csv')
+	
+	elif src == 'infograph':
+		src_train_set = DATASET_1('infograph', 'infograph_train.csv')
+	
+
+
 
 	if tar == 'svhn':
 		tar_train_set = dset.SVHN(root='./dataset/svhn/', download=download, transform = rgb_transform)
@@ -118,9 +136,23 @@ def main(src, tar):
 		tar_train_set = dset.MNIST('./dataset/mnist', train=True, download=True, transform=gray2rgb_transform)
 	
 	elif tar == 'mnistm':
-		src_train_set = DATASET('./dataset/mnistm/train', './dataset/mnistm/train.csv', transform=rgb_transform)
-	
+		tar_train_set = DATASET('./dataset/mnistm/train', './dataset/mnistm/train.csv', transform=rgb_transform)
 
+	elif tar == 'usps':
+		tar_train_set = DATASET('./dataset/usps/train', './dataset/usps/train.csv', transform=rgb_transform)
+
+	elif tar == 'infograph':
+		tar_train_set = DATASET_1('infograph', 'infograph_train.csv')
+	
+	elif tar == 'sketch':
+		tar_train_set = DATASET_1('sketch', 'sketch_train.csv')
+	
+	elif tar == 'quickdraw':
+		tar_train_set = DATASET_1('quickdraw', 'quickdraw_train.csv')
+	
+	elif tar == 'real':
+		tar_train_set = DATASET_1('real', 'real_train.csv')
+	
 
 	src_train_loader = torch.utils.data.DataLoader(
 		dataset = src_train_set,
