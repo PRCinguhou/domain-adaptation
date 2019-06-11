@@ -38,7 +38,7 @@ class ToRGB(object):
 cuda = torch.cuda.is_available()
 device = torch.device('cuda' if cuda else 'cpu')
 download = True
-BATCH_SIZE = 30
+BATCH_SIZE = 500
 EP = 30
 ###		-------------	 ###
 
@@ -123,17 +123,17 @@ def train(encoder, cls_model_1, cls_model_2, optimizer_encoder, optimizer_clf_1,
 			optimizer_clf_2.step()
 
 			# step 3
+			for i in range(3):
+				t_feature = encoder(tar_x)
 
-			t_feature = encoder(tar_x)
+				pred_tar_1 = cls_model_1(t_feature)
+				pred_tar_2 = cls_model_2(t_feature)
 
-			pred_tar_1 = cls_model_1(t_feature)
-			pred_tar_2 = cls_model_2(t_feature)
+				discrepency_loss = torch.mean(abs(F.softmax(pred_tar_1, dim=1) - F.softmax(pred_tar_2, dim=1)))
 
-			discrepency_loss = torch.mean(abs(F.softmax(pred_tar_1, dim=1) - F.softmax(pred_tar_2, dim=1)))
-
-			optimizer_encoder.zero_grad()
-			discrepency_loss.backward(retain_graph=True)
-			optimizer_encoder.step()
+				optimizer_encoder.zero_grad()
+				discrepency_loss.backward(retain_graph=True)
+				optimizer_encoder.step()
 
 
 			if index % 100 == 0:
