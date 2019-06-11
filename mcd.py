@@ -91,11 +91,15 @@ def train(encoder, cls_model_1, cls_model_2, optimizer_encoder, optimizer_clf_1,
 			optimizer_clf_1.zero_grad()
 			optimizer_clf_2.zero_grad()
 
-			loss.backward(retain_graph = True)
+			loss.backward()
 			
 			optimizer_encoder.step()
 			optimizer_clf_1.step()
 			optimizer_clf_2.step()
+			optimizer_encoder.zero_grad()
+			optimizer_clf_1.zero_grad()
+			optimizer_clf_2.zero_grad()
+
 
 			# step 2
 			tar_x, _ = tar_batch
@@ -117,10 +121,13 @@ def train(encoder, cls_model_1, cls_model_2, optimizer_encoder, optimizer_clf_1,
 			optimizer_clf_1.zero_grad()
 			optimizer_clf_2.zero_grad()
 
-			loss.backward(retain_graph=True)
+			loss.backward()
 
 			optimizer_clf_1.step()
 			optimizer_clf_2.step()
+			optimizer_encoder.zero_grad()
+			optimizer_clf_1.zero_grad()
+			optimizer_clf_2.zero_grad()
 
 			# step 3
 			for i in range(3):
@@ -132,8 +139,12 @@ def train(encoder, cls_model_1, cls_model_2, optimizer_encoder, optimizer_clf_1,
 				discrepency_loss = torch.mean(abs(F.softmax(pred_tar_1, dim=1) - F.softmax(pred_tar_2, dim=1)))
 
 				optimizer_encoder.zero_grad()
-				discrepency_loss.backward(retain_graph=True)
+				discrepency_loss.backward()
 				optimizer_encoder.step()
+				optimizer_encoder.zero_grad()
+				optimizer_clf_1.zero_grad()
+				optimizer_clf_2.zero_grad()
+
 
 
 			if index % 100 == 0:
@@ -254,9 +265,9 @@ def main(src, tar):
 		pin_memory=True
 		)
 
-	optimizer_encoder = optim.Adam(G.parameters() , lr=1e-4)
-	optimizer_clf_1 = optim.Adam(cls_c1.parameters(), lr=1e-4)
-	optimizer_clf_2 = optim.Adam(cls_c2.parameters(), lr=1e-4)
+	optimizer_encoder = optim.Adam(G.parameters() , lr=1e-3, weight_decay=0.0005)
+	optimizer_clf_1 = optim.Adam(cls_c1.parameters(), lr=1e-3, weight_decay=0.0005)
+	optimizer_clf_2 = optim.Adam(cls_c2.parameters(), lr=1e-3, weight_decay=0.0005)
 
 	# train
 	ac_list, loss_list = train(G, cls_c1, cls_c2, optimizer_encoder, optimizer_clf_1, optimizer_clf_2, EP, src_train_loader, tar_train_loader, src, tar)
