@@ -91,8 +91,8 @@ class feature_extractor(nn.Module):
 			)
 
 		self.fc = nn.Sequential(
-			nn.Linear(7*7*128, 2048),
-			nn.BatchNorm1d(2048),
+			nn.Linear(7*7*128, 1024),
+			nn.BatchNorm1d(1024),
 			nn.ReLU(True)
 			)
 
@@ -107,10 +107,10 @@ class predictor(nn.Module):
 	def __init__(self):
 		super(predictor, self).__init__()
 		self.fc = nn.Sequential(
-			nn.Linear(2048, 1024),
+			nn.Linear(1024, 1024),
 			nn.BatchNorm1d(1024),
 			nn.ReLU(True),
-			nn.Linear(1024, 10)
+			nn.Linear(1024, 10),
 			)
 
 	def forward(self, feature, alpha=1, reverse=False):
