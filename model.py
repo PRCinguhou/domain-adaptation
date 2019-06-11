@@ -69,7 +69,7 @@ class domain_classifier(nn.Module):
 class feature_extractor(nn.Module):
 
 	def __init__(self):
-		super(feature_extractor, self).__init()
+		super(feature_extractor, self).__init__()
 		self.cnn = nn.Sequential(
 			nn.Conv2d(3, 16, 5, 1, 2),
 			nn.BatchNorm2d(16),
