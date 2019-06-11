@@ -90,31 +90,29 @@ def train(encoder, cls_model_1, cls_model_2, optimizer_encoder, optimizer_clf_1,
 			optimizer_encoder.zero_grad()
 			optimizer_clf_1.zero_grad()
 			optimizer_clf_2.zero_grad()
-
 			loss.backward()
-			
 			optimizer_encoder.step()
 			optimizer_clf_1.step()
 			optimizer_clf_2.step()
+
+
 			optimizer_encoder.zero_grad()
 			optimizer_clf_1.zero_grad()
 			optimizer_clf_2.zero_grad()
-
-
 			# step 2
 			tar_x, _ = tar_batch
 			tar_x = tar_x.to(device)
 
 			s_feature = encoder(x)
-			t_feature = encoder(tar_x)
-
 			pred_s_1 = cls_model_1(s_feature)
 			pred_s_2 = cls_model_2(s_feature)
+
+			t_feature = encoder(tar_x)
 			pred_tar_1 = cls_model_1(t_feature)
 			pred_tar_2 = cls_model_2(t_feature)
 
 			src_loss = loss_fn_cls(pred_s_1, y) + loss_fn_cls(pred_s_2, y)
-			discrepency_loss = torch.mean(abs(F.softmax(pred_tar_1, dim=1) - F.softmax(pred_tar_2, dim=1)))
+			discrepency_loss = torch.mean(torch.abs(F.softmax(pred_tar_1, dim=1) - F.softmax(pred_tar_2, dim=1)))
 
 			loss = src_loss - discrepency_loss
 
@@ -125,12 +123,13 @@ def train(encoder, cls_model_1, cls_model_2, optimizer_encoder, optimizer_clf_1,
 
 			optimizer_clf_1.step()
 			optimizer_clf_2.step()
+
 			optimizer_encoder.zero_grad()
 			optimizer_clf_1.zero_grad()
 			optimizer_clf_2.zero_grad()
 
 			# step 3
-			for i in range(3):
+			for i in range(2):
 				t_feature = encoder(tar_x)
 
 				pred_tar_1 = cls_model_1(t_feature)
@@ -138,9 +137,9 @@ def train(encoder, cls_model_1, cls_model_2, optimizer_encoder, optimizer_clf_1,
 
 				discrepency_loss = torch.mean(abs(F.softmax(pred_tar_1, dim=1) - F.softmax(pred_tar_2, dim=1)))
 
-				optimizer_encoder.zero_grad()
 				discrepency_loss.backward()
 				optimizer_encoder.step()
+
 				optimizer_encoder.zero_grad()
 				optimizer_clf_1.zero_grad()
 				optimizer_clf_2.zero_grad()
@@ -201,12 +200,13 @@ def weights_init_uniform(m):
 	# for every Linear layer in a model..
 	if classname.find('Linear') != -1:
 		# apply a uniform distribution to the weights and a bias=0
-		m.weight.data.uniform_(0.0, 2.0)
+		m.weight.data.uniform_(0.0, 1.0)
 		m.bias.data.fill_(0)
 
 
 def main(src, tar):
 
+	G = feature_extractor().to(device)
 	
 	cls_c1 = predictor().to(device)
 	cls_c2 = predictor().to(device)
@@ -214,41 +214,32 @@ def main(src, tar):
 	cls_c1.apply(weights_init_uniform)
 	cls_c2.apply(weights_init_uniform)
 
-
 	###		 dataloader  	 ###
 	if src == 'mnist':
-		src_train_set = dset.MNIST('./dataset/mnist', train=True, download=True, transform=gray2rgb_transform)
-		G = feature_extractor().to(device)
+		src_train_set = dset.MNIST('./dataset/mnist', train=True, download=True, transform=gray2rgb_transform)	
 		
 	elif src == 'mnistm':
 		src_train_set = DATASET('./dataset/mnistm/train', './dataset/mnistm/train.csv', transforms=rgb_transform)
-		G = feature_extractor().to(device)
 
 	elif src == 'svhn':
 		src_train_set = dset.SVHN(root='./dataset/svhn/', download=download, transform=rgb_transform)
-		G = feature_extractor().to(device)
 
 	elif src == 'usps':
 		src_train_set = DATASET('./dataset/usps/train', './dataset/usps/train.csv', transforms=gray2rgb_transform)
-		G = feature_extractor().to(device)
-
 
 
 	if tar == 'svhn':
 		tar_train_set = dset.SVHN(root='./dataset/svhn/', download=download, transform = rgb_transform)
-		G = feature_extractor().to(device)
 
 	elif tar == 'mnist':
 		tar_train_set = dset.MNIST('./dataset/mnist', train=True, download=True, transform=gray2rgb_transform)
-		G = feature_extractor().to(device)
 
 	elif tar == 'mnistm':
 		tar_train_set = DATASET('./dataset/mnistm/train', './dataset/mnistm/train.csv', transform=rgb_transform)
-		G = feature_extractor().to(device)
 
 	elif tar == 'usps':
 		tar_train_set = DATASET('./dataset/usps/train', './dataset/usps/train.csv', transform=rgb_transform)
-		G = feature_extractor().to(device)
+		
 		
 
 	src_train_loader = torch.utils.data.DataLoader(

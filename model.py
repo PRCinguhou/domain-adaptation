@@ -121,15 +121,11 @@ class feature_extractor(nn.Module):
 			nn.Dropout2d(),
 			nn.Conv2d(32, 64, 5, 1, 2),
 			nn.BatchNorm2d(64),
-			nn.ReLU(True),
-			nn.Conv2d(64, 50, 5, 1, 2),
-			nn.BatchNorm2d(50),
-			nn.ReLU(True)
 			)
 
 		self.fc = nn.Sequential(
-			nn.Linear(7*7*50, 1024),
-			nn.BatchNorm1d(1024),
+			nn.Linear(7*7*64, 2048),
+			nn.BatchNorm1d(2048),
 			nn.ReLU(True)
 			)
 
@@ -144,7 +140,7 @@ class predictor(nn.Module):
 	def __init__(self):
 		super(predictor, self).__init__()
 		self.fc = nn.Sequential(
-			nn.Linear(1024, 1024),
+			nn.Linear(2048, 1024),
 			nn.BatchNorm1d(1024),
 			nn.ReLU(True),
 			nn.Linear(1024, 10),
