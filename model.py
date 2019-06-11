@@ -4,6 +4,8 @@ import numpy as np
 import grad_rever_function
 
 import torchvision.models as models
+
+##### for grad_reverse & soruce only
 class encoder(nn.Module):
 
 	def __init__(self):
@@ -66,6 +68,41 @@ class domain_classifier(nn.Module):
 
 		return self.cls(reverse_feature)
 
+class Identity(nn.Module):
+	def __init__(self, mode='p3'):
+		super(Identity, self).__init__()
+		
+	def forward(self, x):
+		return x
+
+
+##### for DomainDataset
+class feature_extractor_1(nn.Module):
+
+	def __init__(self):
+		super(feature_extractor_1, self).__init__()
+
+		self.cnn = models.resnet50(pretrained=True)
+		self.cnn.fc = Identity()
+
+		self.fc = nn.Sequential(
+			nn.Linear(2048, 2048),
+			nn.BatchNorm1d(2048),
+			nn.ReLU(True),
+			nn.Dropout(0.5),
+			nn.Linear(2048, 345),
+			)
+
+	def forward(self, x):
+
+		feature = self.cnn(x)
+		feature = feature.view(x.size(0), -1)
+		pred = self.fc(feature)
+
+		return pred, feature
+
+
+##### for MCD digits
 class feature_extractor(nn.Module):
 
 	def __init__(self):
@@ -85,13 +122,13 @@ class feature_extractor(nn.Module):
 			nn.Conv2d(32, 64, 5, 1, 2),
 			nn.BatchNorm2d(64),
 			nn.ReLU(True),
-			nn.Conv2d(64, 128, 5, 1, 2),
-			nn.BatchNorm2d(128),
+			nn.Conv2d(64, 50, 5, 1, 2),
+			nn.BatchNorm2d(50),
 			nn.ReLU(True)
 			)
 
 		self.fc = nn.Sequential(
-			nn.Linear(7*7*128, 1024),
+			nn.Linear(7*7*50, 1024),
 			nn.BatchNorm1d(1024),
 			nn.ReLU(True)
 			)
@@ -118,35 +155,3 @@ class predictor(nn.Module):
 			reverse_feature = grad_rever_function.grad_reverse(feature, alpha)
 			return self.fc(reverse_feature)
 		return self.fc(feature)
-
-class Identity(nn.Module):
-	def __init__(self, mode='p3'):
-		super(Identity, self).__init__()
-		
-	def forward(self, x):
-		return x
-
-class feature_extractor_1(nn.Module):
-
-	def __init__(self):
-		super(feature_extractor_1, self).__init__()
-
-		self.cnn = models.resnet50(pretrained=True)
-		self.cnn.fc = Identity()
-
-		self.fc = nn.Sequential(
-			nn.Linear(2048, 2048),
-			nn.BatchNorm1d(2048),
-			nn.ReLU(True),
-			nn.Dropout(0.5),
-			nn.Linear(2048, 345),
-			)
-
-	def forward(self, x):
-
-		feature = self.cnn(x)
-		feature = feature.view(x.size(0), -1)
-		pred = self.fc(feature)
-
-		return pred, feature
-
