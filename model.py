@@ -119,8 +119,6 @@ class predictor(nn.Module):
 			return self.fc(reverse_feature)
 		return self.fc(feature)
 
-
-
 class Identity(nn.Module):
 	def __init__(self, mode='p3'):
 		super(Identity, self).__init__()
