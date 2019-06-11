@@ -10,7 +10,7 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from torch.autograd import Function
-from model import encoder, domain_classifier, feature_extractor_1, predictor,feature_extractor
+from model import encoder, domain_classifier, feature_extractor_1, predictor,feature_extractor, predictor1
 from LoadData import DATASET
 from LoadData_1 import DATASET_1
 import sys
@@ -38,21 +38,21 @@ class ToRGB(object):
 cuda = torch.cuda.is_available()
 device = torch.device('cuda' if cuda else 'cpu')
 download = True
-BATCH_SIZE = 500
-EP = 30
+BATCH_SIZE = 128
+EP = 70
 ###		-------------	 ###
 
 mean, std = np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
 
 rgb_transform = transforms.Compose([
-	transforms.Resize((28, 28)),
+	transforms.Resize((32, 32)),
 	transforms.ToTensor(),
 	transforms.Normalize(mean, std)
 	])
 
 gray2rgb_transform = transforms.Compose([
 	ToRGB(),
-	transforms.Resize((28, 28)),
+	transforms.Resize((32, 32)),
 	transforms.ToTensor(),
 	transforms.Normalize(mean, std)
 	])
@@ -84,8 +84,9 @@ def train(encoder, cls_model_1, cls_model_2, optimizer_encoder, optimizer_clf_1,
 			pred1 = cls_model_1(feature)
 			pred2 = cls_model_2(feature)
 
-			loss = loss_fn_cls(pred1, y) + loss_fn_cls(pred2, y)
-
+			loss1 = loss_fn_cls(pred1, y) 
+			loss2 = loss_fn_cls(pred2, y)
+			loss = loss1 + loss2
 		
 			optimizer_encoder.zero_grad()
 			optimizer_clf_1.zero_grad()
@@ -189,9 +190,9 @@ def train(encoder, cls_model_1, cls_model_2, optimizer_encoder, optimizer_clf_1,
 		loss_list.append(total_loss / len(test_loader) / BATCH_SIZE)
 		if (ac / len(test_loader) / BATCH_SIZE) > max_:
 			max_ = (ac / len(test_loader) / BATCH_SIZE)
-			torch.save(cls_model_1.state_dict(), './model/reverse_grad_'+src_name+'2'+tar_name+'_1.pth')
-			torch.save(cls_model_2.state_dict(), './model/reverse_grad_'+src_name+'2'+tar_name+'_2.pth')
-			torch.save(encoder.state_dict(), './model/reverse_grad_'+src_name+'2'+tar_name+'_encoder.pth')
+			torch.save(cls_model_1.state_dict(), './model/mcd_'+src_name+'2'+tar_name+'_1.pth')
+			torch.save(cls_model_2.state_dict(), './model/mcd_'+src_name+'2'+tar_name+'_2.pth')
+			torch.save(encoder.state_dict(), './model/mcd_'+src_name+'2'+tar_name+'.pth')
 
 	return ac_list, loss_list
 
@@ -204,10 +205,11 @@ def weights_init_uniform(m):
 		m.bias.data.fill_(0)
 
 
+
 def main(src, tar):
 
 	G = feature_extractor().to(device)
-	
+
 	cls_c1 = predictor().to(device)
 	cls_c2 = predictor().to(device)
 
@@ -256,9 +258,9 @@ def main(src, tar):
 		pin_memory=True
 		)
 
-	optimizer_encoder = optim.Adam(G.parameters() , lr=1e-3, weight_decay=0.0005)
-	optimizer_clf_1 = optim.Adam(cls_c1.parameters(), lr=1e-3, weight_decay=0.0005)
-	optimizer_clf_2 = optim.Adam(cls_c2.parameters(), lr=1e-3, weight_decay=0.0005)
+	optimizer_encoder = optim.Adam(G.parameters() , lr=2e-4, weight_decay=0.0005)
+	optimizer_clf_1 = optim.Adam(cls_c1.parameters(), lr=2e-4, weight_decay=0.0005)
+	optimizer_clf_2 = optim.Adam(cls_c2.parameters(), lr=2e-4, weight_decay=0.0005)
 
 	# train
 	ac_list, loss_list = train(G, cls_c1, cls_c2, optimizer_encoder, optimizer_clf_1, optimizer_clf_2, EP, src_train_loader, tar_train_loader, src, tar)
@@ -267,7 +269,7 @@ def main(src, tar):
 	# plot tsne
 	loss_list = np.array(loss_list).flatten()
 	epoch = [i for i in range(EP)]
-	my_function.tsne_plot(clf, src_train_loader, tar_train_loader, src, tar, BATCH_SIZE, 'reverse_grad')
+	my_function.tsne_plot(G, src_train_loader, tar_train_loader, src, tar, BATCH_SIZE, 'mcd', mode=False)
 
 	### plot learning curve  ###
 	plt.figure()

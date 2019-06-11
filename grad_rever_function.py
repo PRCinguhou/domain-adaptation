@@ -24,7 +24,7 @@ def grad_reverse(x, alpha):
 	return GradReverse.apply(x, alpha)
 	
 
-def tsne_plot(cls_model, train_loader, test_loader, src_name, tar_name, batch_size, title):
+def tsne_plot(cls_model, train_loader, test_loader, src_name, tar_name, batch_size, title, mode=True):
 
 	cls_model.load_state_dict(torch.load('./model/'+title+'_'+src_name+'2'+tar_name+'.pth'))
 	cls_model.eval()
@@ -35,8 +35,10 @@ def tsne_plot(cls_model, train_loader, test_loader, src_name, tar_name, batch_si
 		x = x.to(device)
 		y = y.to(device)
 
-		_, feature = cls_model(x)
-
+		if mode:
+			_, feature = cls_model(x)
+		else:
+			feature = cls_model(x)
 		features.append(feature.cpu().detach().numpy())
 
 		if index * batch_size > 2000:
@@ -46,7 +48,10 @@ def tsne_plot(cls_model, train_loader, test_loader, src_name, tar_name, batch_si
 		x, _ = batch
 		x = x.to(device)
 
-		_, featrue = cls_model(x)
+		if mode:
+			_, feature = cls_model(x)
+		else:
+			feature = cls_model(x)
 
 		features.append(featrue.cpu().detach().numpy())
 

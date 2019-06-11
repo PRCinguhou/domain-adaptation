@@ -34,7 +34,8 @@ class encoder(nn.Module):
 		self.fc = nn.Sequential(
 			nn.Linear(7*7*128, 2048),
 			nn.BatchNorm1d(2048),
-			nn.ReLU(True)
+			nn.ReLU(True),
+			nn.Dropout(0.5)
 			)
 
 		self.cls = nn.Linear(2048, 10)
@@ -108,25 +109,27 @@ class feature_extractor(nn.Module):
 	def __init__(self):
 		super(feature_extractor, self).__init__()
 		self.cnn = nn.Sequential(
-			nn.Conv2d(3, 16, 5, 1, 2),
-			nn.BatchNorm2d(16),
+			nn.Conv2d(3, 32, 5, 1, 2),
+			nn.BatchNorm2d(32),
 			nn.ReLU(True),
 			nn.MaxPool2d(2),
 
-			nn.Conv2d(16, 32, 5, 1, 2),
-			nn.BatchNorm2d(32),
+			nn.Conv2d(32, 64, 5, 1, 2),
+			nn.BatchNorm2d(64),
 			nn.ReLU(True),
 			nn.MaxPool2d(2),
 			
 			nn.Dropout2d(),
-			nn.Conv2d(32, 64, 5, 1, 2),
-			nn.BatchNorm2d(64),
+			nn.Conv2d(64, 128, 5, 1, 2),
+			nn.BatchNorm2d(128),
+			nn.ReLU(True)
 			)
 
 		self.fc = nn.Sequential(
-			nn.Linear(7*7*64, 2048),
-			nn.BatchNorm1d(2048),
-			nn.ReLU(True)
+			nn.Linear(8*8*128, 3072),
+			nn.BatchNorm1d(3072),
+			nn.ReLU(True),
+			nn.Dropout(0.5)
 			)
 
 	def forward(self, x):
@@ -140,9 +143,10 @@ class predictor(nn.Module):
 	def __init__(self):
 		super(predictor, self).__init__()
 		self.fc = nn.Sequential(
-			nn.Linear(2048, 1024),
+			nn.Linear(3072, 1024),
 			nn.BatchNorm1d(1024),
 			nn.ReLU(True),
+			nn.Dropout(0.5),
 			nn.Linear(1024, 10),
 			)
 
@@ -151,3 +155,4 @@ class predictor(nn.Module):
 			reverse_feature = grad_rever_function.grad_reverse(feature, alpha)
 			return self.fc(reverse_feature)
 		return self.fc(feature)
+
