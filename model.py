@@ -105,7 +105,7 @@ class feature_extractor(nn.Module):
 class predictor(nn.Module):
 
 	def __init__(self):
-
+		super(predictor, self).__init__()
 		self.fc = nn.Sequential(
 			nn.Linear(2048, 1024),
 			nn.BatchNorm1d(1024),
