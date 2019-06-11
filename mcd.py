@@ -129,7 +129,7 @@ def train(encoder, cls_model_1, cls_model_2, optimizer_encoder, optimizer_clf_1,
 			pred_tar_1 = cls_model_1(t_feature)
 			pred_tar_2 = cls_model_2(t_feature)
 
-			discrepency_loss = torch.mean(abs(pred_tar_1 - pred_tar_2))
+			discrepency_loss = torch.mean(abs(F.softmax(pred_tar_1, dim=1) - F.softmax(pred_tar_2, dim=1)))
 
 			optimizer_encoder.zero_grad()
 			discrepency_loss.backward(retain_graph=True)
