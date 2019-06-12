@@ -23,6 +23,7 @@ python reverse_grad svhn mnist
 
 |              | SVHN  --> MNIST | MNISTM  --> MNIST  | USPS --> MNIST |
 | :----------: | :-------------: | :----------------: | :------------: |
-| source only  |       62%       |        98.5        |       64%      |
-| reverse grad |       75%       |        98.8        |       88%      |
+| source only  |       62%       |        98.5%       |      64/0%     |
+| reverse grad |       75%       |        98.8%       |      88.0%     |
+|    MCD DA    |       88%       |        99.2%       |      96.5%     |
  
