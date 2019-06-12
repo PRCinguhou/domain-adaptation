@@ -10,7 +10,7 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from torch.autograd import Function
-from model import encoder, domain_classifier, feature_extractor_1, predictor,feature_extractor, predictor1
+from model import encoder, domain_classifier, feature_extractor_1, predictor,feature_extractor
 from LoadData import DATASET
 from LoadData_1 import DATASET_1
 import sys
@@ -130,7 +130,7 @@ def train(encoder, cls_model_1, cls_model_2, optimizer_encoder, optimizer_clf_1,
 			optimizer_clf_2.zero_grad()
 
 			# step 3
-			for i in range(2):
+			for i in range(3):
 				t_feature = encoder(tar_x)
 
 				pred_tar_1 = cls_model_1(t_feature)
@@ -248,19 +248,17 @@ def main(src, tar):
 		dataset = src_train_set,
 		batch_size = BATCH_SIZE,
 		shuffle = True,
-		pin_memory=True
 		)
 
 	tar_train_loader = torch.utils.data.DataLoader(
 		dataset = tar_train_set,
 		batch_size = BATCH_SIZE,
 		shuffle = True,
-		pin_memory=True
 		)
 
-	optimizer_encoder = optim.Adam(G.parameters() , lr=2e-4, weight_decay=0.0005)
-	optimizer_clf_1 = optim.Adam(cls_c1.parameters(), lr=2e-4, weight_decay=0.0005)
-	optimizer_clf_2 = optim.Adam(cls_c2.parameters(), lr=2e-4, weight_decay=0.0005)
+	optimizer_encoder = optim.Adam(G.parameters() , lr=3e-4, weight_decay=0.0005)
+	optimizer_clf_1 = optim.Adam(cls_c1.parameters(), lr=3e-4, weight_decay=0.0005)
+	optimizer_clf_2 = optim.Adam(cls_c2.parameters(), lr=3e-4, weight_decay=0.0005)
 
 	# train
 	ac_list, loss_list = train(G, cls_c1, cls_c2, optimizer_encoder, optimizer_clf_1, optimizer_clf_2, EP, src_train_loader, tar_train_loader, src, tar)

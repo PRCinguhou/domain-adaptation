@@ -71,6 +71,9 @@ def train(clf, optimizer, ep, train_loader, test_loader, src_name, tar_name):
 			loss.backward()
 			optimizer.step()
 
+			if index % 10:
+				print('[%d]/[%d]' % (index, len(train_loader)))
+
 		ac = 0
 		total_loss = 0
 		for index, batch in enumerate(test_loader):
@@ -104,70 +107,29 @@ def main(src, tar):
 	###		 dataloader  	 ###
 	if src == 'mnist':
 		src_train_set = dset.MNIST('./dataset/mnist', train=True, download=True, transform=gray2rgb_transform)
-		clf = encoder().to(device)
 		
 	elif src == 'mnistm':
 		src_train_set = DATASET('./dataset/mnistm/train', './dataset/mnistm/train.csv', transforms=rgb_transform)
-		clf = encoder().to(device)
 
 	elif src == 'svhn':
 		src_train_set = dset.SVHN(root='./dataset/svhn/', download=download, transform=rgb_transform)
-		clf = encoder().to(device)
 
 	elif src == 'usps':
 		src_train_set = DATASET('./dataset/usps/train', './dataset/usps/train.csv', transforms=gray2rgb_transform)
-		clf = encoder().to(device)
-
-	elif src == 'quickdraw':
-		src_train_set = DATASET_1('quickdraw', 'quickdraw_train.csv')
-		clf = feature_extractor_1().to(device)
-
-	elif src == 'real':
-		src_train_set = DATASET_1('real', 'real_train.csv')
-		clf = feature_extractor_1().to(device)
-
-	elif src == 'sketch':
-		src_train_set = DATASET_1('sketch', 'sketch_train.csv')
-		clf = feature_extractor_1().to(device)
-
-	elif src == 'infograph':
-		src_train_set = DATASET_1('infograph', 'infograph_train.csv')
-		clf = feature_extractor_1().to(device)
-
 
 
 
 	if tar == 'svhn':
 		tar_train_set = dset.SVHN(root='./dataset/svhn/', download=download, transform = rgb_transform)
-		clf = encoder().to(device)
 
 	elif tar == 'mnist':
 		tar_train_set = dset.MNIST('./dataset/mnist', train=True, download=True, transform=gray2rgb_transform)
-		clf = encoder().to(device)
 
 	elif tar == 'mnistm':
 		tar_train_set = DATASET('./dataset/mnistm/train', './dataset/mnistm/train.csv', transform=rgb_transform)
-		clf = encoder().to(device)
 
 	elif tar == 'usps':
 		tar_train_set = DATASET('./dataset/usps/train', './dataset/usps/train.csv', transform=rgb_transform)
-		clf = encoder().to(device)
-		
-	elif tar == 'infograph':
-		tar_train_set = DATASET_1('infograph', 'infograph_train.csv')
-		clf = feature_extractor_1().to(device)
-
-	elif tar == 'sketch':
-		tar_train_set = DATASET_1('sketch', 'sketch_train.csv')
-		clf = feature_extractor_1().to(device)
-
-	elif tar == 'quickdraw':
-		tar_train_set = DATASET_1('quickdraw', 'quickdraw_train.csv')
-		clf = feature_extractor_1().to(device)
-
-	elif tar == 'real':
-		tar_train_set = DATASET_1('real', 'real_train.csv')
-		clf = feature_extractor_1().to(device)
 
 
 	src_train_loader = torch.utils.data.DataLoader(

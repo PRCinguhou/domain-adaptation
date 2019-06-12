@@ -53,12 +53,12 @@ def tsne_plot(cls_model, train_loader, test_loader, src_name, tar_name, batch_si
 		else:
 			feature = cls_model(x)
 
-		features.append(featrue.cpu().detach().numpy())
+		features.append(feature.cpu().detach().numpy())
 
 		if index * batch_size > 2000:
 			break
 
-	features = np.array([featrue for featrue in features])
+	features = np.array([feature for feature in features])
 	features = features.reshape(-1, 2048)
 	features = TSNE(n_components=2).fit_transform(features)
 
