@@ -1,6 +1,5 @@
 ## Domain Adaption - Pytorch
-A Pytorch implement for source-only & [Grad Reverse layer](https://arxiv.org/pdf/1409.7495.pdf)
-
+A Pytorch implement for source-only & [Grad Reverse layer](https://arxiv.org/pdf/1409.7495.pdf) & [MCD](https://arxiv.org/pdf/1712.02560.pdf) &[MDSA](https://arxiv.org/pdf/1812.01754.pdf)
 ## Usage 
 First you need to put the dataset in "dataset" folder.  
 For source only :
@@ -17,6 +16,21 @@ for Grad Reverse :
   - $2 : target domain
 ```
 python reverse_grad svhn mnist
+```
+for MCD :  
+- python mcd.py $1 $2
+  - $1 : source domain
+  - $2 : target domain
+```
+python mcd.py svhn mnist
+```
+for MSDA :  
+- python train.py $1 $2 $3 $4 .....
+  - $1, $2, $3 : source domain
+  - $4 : target domain
+(last one will be target domain, others will be source domain.)
+```
+ python train.py mnist svhn ministm usps
 ```
 
 ## Result
