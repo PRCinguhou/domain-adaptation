@@ -12,7 +12,7 @@ import torch.nn.functional as F
 from torch.autograd import Function
 from model import encoder, domain_classifier, feature_extractor_1, predictor,feature_extractor
 from LoadData import DATASET
-from LoadData_1 import DATASET_1
+
 import sys
 import grad_rever_function as my_function
 

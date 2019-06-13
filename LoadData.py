@@ -10,19 +10,43 @@ from torchvision import transforms
 from os import listdir
 import pandas as pd
 
-mean, std = np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
+class ToRGB(object):
+
+	def __init__(self):
+		pass
+		
+	def __call__(self, sample):
+
+		sample = sample.convert('RGB')
+		return sample
+
+
+cuda = torch.cuda.is_available()
+device = torch.device('cuda' if cuda else 'cpu')
+print(device)
+mean = np.array([0.5, 0.5, 0.5])
+std = np.array([0.5, 0.5, 0.5])
+
+transform = transforms.Compose([
+	ToRGB(),
+	transforms.Resize((32, 32)),
+	transforms.ToTensor(),
+	transforms.Normalize(mean, std)
+	])
 
 
 class DATASET(Dataset):
 
-	def __init__(self, img_path, label_path, transforms):
+	def __init__(self, img_path, label_path, transforms=None):
 		super(DATASET, self).__init__()
 
-		self.img_path = join(os.getcwd(), img_path)
-		self.label_path = join(os.getcwd(), label_path)
+		self.img_path = join(os.getcwd(), 'dataset', img_path, label_path)
+		self.label_path = join(os.getcwd(), 'dataset', img_path, label_path+'.csv')
+		
 		self.label_numpy = pd.read_csv(self.label_path).values[:, 1]
 		self.imgs_files = listdir(self.img_path)
-		self.transform = transforms
+		
+		self.transform = transform
 	
 	def __len__(self):
 		return len(self.imgs_files)
