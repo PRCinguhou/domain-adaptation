@@ -27,14 +27,11 @@ class encoder(nn.Module):
 			nn.Conv2d(32, 64, 5, 1, 2),
 			nn.BatchNorm2d(64),
 			nn.ReLU(True),
-			nn.Conv2d(64, 128, 5, 1, 2),
-			nn.BatchNorm2d(128),
-			nn.ReLU(True)
 			)
 
 		self.fc = nn.Sequential(
-			nn.Linear(7*7*128, 4096),
-			nn.BatchNorm1d(4096),
+			nn.Linear(8*8*64, 1024),
+			nn.BatchNorm1d(1024),
 			nn.ReLU(True),
 			nn.Dropout(0.5)
 			)
@@ -73,32 +70,6 @@ class Identity(nn.Module):
 		
 	def forward(self, x):
 		return x
-
-
-##### for DomainDataset
-class feature_extractor_1(nn.Module):
-
-	def __init__(self):
-		super(feature_extractor_1, self).__init__()
-
-		self.cnn = models.resnet50(pretrained=True)
-		self.cnn.fc = Identity()
-
-		self.fc = nn.Sequential(
-			nn.Linear(2048, 2048),
-			nn.BatchNorm1d(2048),
-			nn.ReLU(True),
-			nn.Dropout(0.5),
-			nn.Linear(2048, 345),
-			)
-
-	def forward(self, x):
-
-		feature = self.cnn(x)
-		feature = feature.view(x.size(0), -1)
-		pred = self.fc(feature)
-
-		return pred, feature
 
 
 ##### for MCD digits
@@ -141,11 +112,11 @@ class predictor(nn.Module):
 	def __init__(self):
 		super(predictor, self).__init__()
 		self.fc = nn.Sequential(
-			nn.Linear(2048, 2048),
-			nn.BatchNorm1d(2048),
+			nn.Linear(1024, 1024),
+			nn.BatchNorm1d(1024),
 			nn.ReLU(True),
-			#nn.Dropout(0.5),
-			nn.Linear(2048, 345),
+			nn.Dropout(0.5),
+			nn.Linear(1024, 10),
 			)
 
 	def forward(self, feature, alpha=1, reverse=False):
