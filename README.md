@@ -1,4 +1,4 @@
-## Domain Adaption - Pytorch
+## Domain Adaptation - Pytorch
 A Pytorch implement for source-only & [Grad Reverse layer](https://arxiv.org/pdf/1409.7495.pdf) & [MCD](https://arxiv.org/pdf/1712.02560.pdf) &[MDSA](https://arxiv.org/pdf/1812.01754.pdf)
 ## Usage 
 First you need to put the dataset in "dataset" folder.  
